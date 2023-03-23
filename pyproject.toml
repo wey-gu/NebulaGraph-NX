@@ -1,7 +1,5 @@
 [tool.pdm]
 
-[tool.pdm.scripts]
-ng_nx-api = {call = "ng_nx.ng_nx_api.__main__:run"}
 
 [tool.pdm.scripts.test]
 shell = """
@@ -84,7 +82,7 @@ name = "ng_nx"
 version = "0.1.0"
 description = "NebulaGraph NetowrkX adaptor"
 authors = [
-    {name = "Wey Gu", email = "<weyl.gu@gmail.com>"},
+    {name = "Wey Gu", email = "weyl.gu@gmail.com"},
 ]
 dependencies = [
     "networkx>=2.5.1",
