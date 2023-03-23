@@ -1,0 +1,128 @@
+[tool.pdm]
+
+[tool.pdm.scripts]
+ng_nx-api = {call = "ng_nx.ng_nx_api.__main__:run"}
+
+[tool.pdm.scripts.test]
+shell = """
+    pdm update -dG dev
+    pytest tests/unit/
+"""
+
+[tool.pdm.scripts.lint]
+shell = """
+    pdm update -dG lint
+    flake8 --max-line-length=84 ng_nx tests
+    isort --check ng_nx tests --diff
+    black --line-length 84 --check ng_nx tests --diff
+"""
+
+[tool.pdm.scripts.format]
+shell = """
+    pdm update -dG lint
+    isort ng_nx tests
+    black --line-length 84 ng_nx tests examples
+"""
+
+[tool.pdm.scripts.dockerup]
+shell = """
+    docker-compose -f 'tests/integration/setup/docker-compose.yaml' up -d --remove-orphans
+    echo "Waiting for NebulaGraph to start..."
+    sleep 5
+    for i in {1..50}; do docker-compose -f 'tests/integration/setup/docker-compose.yaml' ps | grep "unhealthy\\|starting" | wc -l | grep -q 0 && break; echo Waiting for another 5 sec; sleep 5; done
+    echo "NebulaGraph is up and running, removing console container"
+    docker-compose -f 'tests/integration/setup/docker-compose.yaml' stop console
+    docker-compose -f 'tests/integration/setup/docker-compose.yaml' rm -f console
+    docker-compose -f 'tests/integration/setup/docker-compose.yaml' ps
+"""
+
+[tool.pdm.scripts.dockerstatus]
+shell = """
+    docker-compose -f 'tests/integration/setup/docker-compose.yaml' ps
+"""
+
+[tool.pdm.scripts.dockerdown]
+shell = """
+    docker-compose -f 'tests/integration/setup/docker-compose.yaml' down
+"""
+
+[tool.pdm.scripts.int-test]
+shell = """
+    pdm update -dG dev
+    pdm run dockerup
+
+    echo "Run integration tests"
+
+    pytest tests/integration/
+"""
+
+[tool.black]
+line-length = 84
+exclude = '''
+/(
+    \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+atomic = true
+skip_glob = ["*/setup.py"]
+filter_files = true
+
+[project]
+name = "ng_nx"
+version = "0.1.0"
+description = "NebulaGraph NetowrkX adaptor"
+authors = [
+    {name = "Wey Gu", email = "<weyl.gu@gmail.com>"},
+]
+dependencies = [
+    "networkx>=2.5.1",
+    "nebula3-python",
+]
+# pyspark for unit test cannot work with python 3.10
+requires-python = ">=3.7"
+readme = "README.md"
+license = {text = "Apache-2.0"}
+classifiers = [
+    "Topic :: Software Development :: Build Tools",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+]
+[project.urls]
+Homepage = "https://github.com/wey-gu/nebulagraph-nx"
+Repository = "https://github.com/wey-gu/nebulagraph-nx"
+Documentation = "https://github.com/wey-gu/nebulagraph-nx#documentation"
+Changelog = "https://github.com/wey-gu/nebulagraph-nx/releases"
+
+[build-system]
+requires = ["pdm-pep517>=1.0"]
+build-backend = "pdm.pep517.api"
+
+[project.optional-dependencies]
+
+lint = [
+    "flake8>=4.0.1",
+    "black[jupyter]>=23.1.0",
+    "isort>=5.11.5",
+]
+test = [
+    "pytest>=7.2.2",
+]
+dev = ["ng_nx[lint,test]"]
