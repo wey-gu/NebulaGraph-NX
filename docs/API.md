@@ -16,8 +16,8 @@ config = NebulaGraphConfig(**config_dict)
 
 reader = NebulaReader(
     space="basketballplayer",
-    edges=["follow"],
-    properties=[["degree"]],
+    edges=["follow", "serve"],
+    properties=[["degree"], ["start_year", "end_year"]],
     nebula_config=config, limit=100)
 
 g = reader.read()
@@ -27,5 +27,5 @@ pr = nx.pagerank(
     g, alpha=0.85,
     max_iter=100,
     tol=1e-06,
-    weight='weight')
+    weight='degree')
 ```

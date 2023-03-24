@@ -41,6 +41,7 @@ class NebulaReader:
             session.execute(f"USE {self.space}")
             assert session.execute(f"USE {self.space}").is_succeeded()
             result_list = []
+            g = nx.MultiDiGraph()
             for i in range(len(self.edges)):
                 edge = self.edges[i]
                 properties = self.properties[i]
@@ -54,14 +55,16 @@ class NebulaReader:
                 # print(f"Result: {result}")
                 assert result.is_succeeded()
                 result_list.append(result)
+
             # merge all result
-            df = pd.DataFrame()
-            for result in result_list:
-                df = pd.concat([df, result_to_df(result)], ignore_index=True)
-            # build graph
-            return nx.from_pandas_edgelist(
-                df, "src", "dst", self.properties[0], create_using=nx.MultiDiGraph()
-            )
+            for i, result in enumerate(result_list):
+                _df = result_to_df(result)
+                # TBD, consider add label of edge
+                _g = nx.from_pandas_edgelist(
+                    _df, "src", "dst", self.properties[i], create_using=nx.MultiDiGraph()
+                )
+                g = nx.compose(g, _g)
+            return g
 
     def release(self):
         self.connection_pool.close()
