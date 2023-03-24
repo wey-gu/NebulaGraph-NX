@@ -1,11 +1,13 @@
 ## NebulaReader
 
 ```python
-from ng_nx import NebulaReader, NebulaGraphConfig
-from networkx import nx
+from ng_nx import NebulaReader
+from ng_nx.utils import NebulaGraphConfig
+
+import networkx as nx
 
 config_dict = {
-    "graphd_hosts": "graphd:9669",
+    "graphd_hosts": "127.0.0.1:9669",
     "user": "root",
     "password": "nebula",
     "space": "basketballplayer",

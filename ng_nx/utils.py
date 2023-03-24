@@ -3,10 +3,10 @@
 
 from __future__ import annotations
 
-from nebula3.data.ResultSet import ResultSet
-import pandas as pd
-
 from typing import Dict
+
+import pandas as pd
+from nebula3.data.ResultSet import ResultSet
 
 # Default Configuration
 GRAPHD_HOSTS = "graphd:9669"

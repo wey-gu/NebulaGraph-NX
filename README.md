@@ -44,8 +44,10 @@ pip install ng_nx
 ### Run Pagerank on NebulaGraph
 
 ```python
-from ng_nx import NebulaReader, NebulaGraphConfig
-from networkx import nx
+from ng_nx import NebulaReader
+from ng_nx.utils import NebulaGraphConfig
+
+import networkx as nx
 
 config = NebulaGraphConfig()
 

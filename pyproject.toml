@@ -19,7 +19,7 @@ shell = """
 shell = """
     pdm update -dG lint
     isort ng_nx tests
-    black --line-length 84 ng_nx tests examples
+    black --line-length 84 ng_nx tests
 """
 
 [tool.pdm.scripts.dockerup]
@@ -79,7 +79,7 @@ filter_files = true
 
 [project]
 name = "ng_nx"
-version = "0.1.0"
+version = "0.1.2"
 description = "NebulaGraph NetowrkX adaptor"
 authors = [
     {name = "Wey Gu", email = "weyl.gu@gmail.com"},
@@ -87,15 +87,16 @@ authors = [
 dependencies = [
     "networkx>=2.5.1",
     "nebula3-python",
+    "pandas>=1.1.5",
+    "numpy>=1.23.5",
+    "scipy>=1.9.3",
 ]
-# pyspark for unit test cannot work with python 3.10
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 readme = "README.md"
 license = {text = "Apache-2.0"}
 classifiers = [
     "Topic :: Software Development :: Build Tools",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
@@ -122,5 +123,8 @@ lint = [
 ]
 test = [
     "pytest>=7.2.2",
+    "pytest-mock>=3.10.0",
 ]
-dev = ["ng_nx[lint,test]"]
+dev = [
+    "ng_nx[lint,test]",
+]
