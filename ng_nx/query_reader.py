@@ -60,7 +60,7 @@ class NebulaReader:
                 df = pd.concat([df, result_to_df(result)], ignore_index=True)
             # build graph
             return nx.from_pandas_edgelist(
-                df, "src", "dst", self.properties[0], create_using=nx.DiGraph()
+                df, "src", "dst", self.properties[0], create_using=nx.MultiDiGraph()
             )
 
     def release(self):
