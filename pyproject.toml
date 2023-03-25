@@ -79,7 +79,7 @@ filter_files = true
 
 [project]
 name = "ng_nx"
-version = "0.1.5"
+version = "0.1.6"
 description = "NebulaGraph NetowrkX adaptor"
 authors = [
     {name = "Wey Gu", email = "weyl.gu@gmail.com"},
@@ -89,7 +89,7 @@ authors = [
 dependencies = [
     "networkx>=2.5.1",
     "nebula3-python",
-    "pandas",
+    "pandas>=1.3.5",
     "numpy>=1.21.6",
     "scipy>=1.7.3",
 ]
