@@ -60,8 +60,9 @@ class NebulaReader:
             for i, result in enumerate(result_list):
                 _df = result_to_df(result)
                 # TBD, consider add label of edge
+                properties = self.properties[i] if self.properties[i] else None
                 _g = nx.from_pandas_edgelist(
-                    _df, "src", "dst", self.properties[i], create_using=nx.MultiDiGraph()
+                    _df, "src", "dst", properties, create_using=nx.MultiDiGraph()
                 )
                 g = nx.compose(g, _g)
             return g
