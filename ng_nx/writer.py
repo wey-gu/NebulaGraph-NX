@@ -134,3 +134,4 @@ class NebulaWriter:
                 ), f"Failed to write data: {result.error_msg()}"
             else:
                 raise TypeError("Data should be a dict or a generator object")
+        return True
