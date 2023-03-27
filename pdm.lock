@@ -331,6 +331,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "python-louvain"
+version = "0.16"
+summary = "Louvain algorithm for community detection"
+dependencies = [
+    "networkx",
+    "numpy",
+]
+
+[[package]]
 name = "pytz"
 version = "2022.7.1"
 summary = "World timezone definitions, modern and historical"
@@ -399,7 +408,7 @@ summary = "Backport of pathlib-compatible object wrapper for zip files"
 
 [metadata]
 lock_version = "4.1"
-content_hash = "sha256:b6f504b6a9f1dbe35aff4582825909fc0b8cd3d1dc9d5d656a410c347c6a6f1a"
+content_hash = "sha256:e6110cae0be9a49de12d3dedd7ebac52f95fdf03fa82cd6fdf1b769477a1f6fe"
 
 [metadata.files]
 "appnope 0.1.3" = [
@@ -631,6 +640,9 @@ content_hash = "sha256:b6f504b6a9f1dbe35aff4582825909fc0b8cd3d1dc9d5d656a410c347
 "python-dateutil 2.8.2" = [
     {url = "https://files.pythonhosted.org/packages/36/7a/87837f39d0296e723bb9b62bbb257d0355c7f6128853c78955f57342a56d/python_dateutil-2.8.2-py2.py3-none-any.whl", hash = "sha256:961d03dc3453ebbc59dbdea9e4e11c5651520a876d0f4db161e8674aae935da9"},
     {url = "https://files.pythonhosted.org/packages/4c/c4/13b4776ea2d76c115c1d1b84579f3764ee6d57204f6be27119f13a61d0a9/python-dateutil-2.8.2.tar.gz", hash = "sha256:0123cacc1627ae19ddf3c27a5de5bd67ee4586fbdd6440d9748f8abb483d3e86"},
+]
+"python-louvain 0.16" = [
+    {url = "https://files.pythonhosted.org/packages/7c/0d/8787b021d52eb8764c0bb18ab95f720cf554902044c6a5cb1865daf45763/python-louvain-0.16.tar.gz", hash = "sha256:b7ba2df5002fd28d3ee789a49532baad11fe648e4f2117cf0798e7520a1da56b"},
 ]
 "pytz 2022.7.1" = [
     {url = "https://files.pythonhosted.org/packages/03/3e/dc5c793b62c60d0ca0b7e58f1fdd84d5aaa9f8df23e7589b39cc9ce20a03/pytz-2022.7.1.tar.gz", hash = "sha256:01a0681c4b9684a28304615eba55d1ab31ae00bf68ec157ec3708a8182dbbcd0"},
