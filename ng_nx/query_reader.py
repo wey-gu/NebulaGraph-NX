@@ -12,13 +12,11 @@ from ng_nx.utils import NebulaGraphConfig, result_to_df
 class NebulaReader:
     def __init__(
         self,
-        space: str,
         edges: list,
         properties: list,
         nebula_config: NebulaGraphConfig,
         limit: int,
     ):
-        self.space = space
         self.edges = edges
         self.properties = properties
         self.limit = limit
@@ -28,6 +26,9 @@ class NebulaReader:
         graphd_host_list = [
             (host.split(":")[0], int(host.split(":")[1])) for host in graphd_hosts
         ]
+        self.space = nebula_config.space
+        self.nebula_user = nebula_config.user
+        self.nebula_password = nebula_config.password
         self.connection_pool = ConnectionPool()
         assert self.connection_pool.init(
             graphd_host_list, config
@@ -37,9 +38,12 @@ class NebulaReader:
         ), "edges and properties should have the same length"
 
     def read(self):
-        with self.connection_pool.session_context("root", "nebula") as session:
-            session.execute(f"USE {self.space}")
-            assert session.execute(f"USE {self.space}").is_succeeded()
+        with self.connection_pool.session_context(
+            self.nebula_user, self.nebula_password
+        ) as session:
+            assert session.execute(
+                f"USE {self.space}"
+            ).is_succeeded(), f"Failed to use space {self.space}"
             result_list = []
             g = nx.MultiDiGraph()
             for i in range(len(self.edges)):
@@ -69,3 +73,6 @@ class NebulaReader:
 
     def release(self):
         self.connection_pool.close()
+
+    def __del__(self):
+        self.release()

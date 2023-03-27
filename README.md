@@ -41,7 +41,7 @@ NebulaGraph NetworkX (ng_nx) is a tool that allows you to use the NetworkX API f
 pip install ng_nx
 ```
 
-### Run Pagerank on NebulaGraph
+### Run Algorithm on NebulaGraph
 
 ```python
 from ng_nx import NebulaReader
@@ -64,7 +64,60 @@ pr = nx.pagerank(
     max_iter=100,
     tol=1e-06,
     weight='degree')
+
+import community as community_louvain
+
+ug = g.to_undirected()
+louvain = community_louvain.best_partition(ug)
 ```
+
+### Write Result to NebulaGraph
+
+#### Create Schema for the result writing
+
+```ngql
+CREATE TAG IF NOT EXISTS pagerank (
+    pagerank double NOT NULL
+);
+
+CREATE TAG IF NOT EXISTS louvain (
+    cluster_id int NOT NULL
+);
+```
+
+```python
+from ng_nx import NebulaWriter
+
+pr_writer = NebulaWriter(data=pr, nebula_config=config)
+
+# properties to write
+properties = ["pagerank"]
+
+pr_writer.set_options(
+    label="pagerank",
+    properties=properties,
+    batch_size=256,
+    write_mode="insert",
+    sink="nebulagraph_vertex",
+)
+# write back to NebulaGraph
+pr_writer.write()
+
+# write louvain result
+
+louvain_writer = NebulaWriter(data=louvain, nebula_config=config)
+# properties to write
+properties = ["cluster_id"]
+louvain_writer.set_options(
+    label="louvain",
+    properties=properties,
+    batch_size=256,
+    write_mode="insert",
+    sink="nebulagraph_vertex",
+)
+louvain_writer.write()
+```
+
 
 ## Documentation
 
