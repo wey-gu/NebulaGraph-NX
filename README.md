@@ -35,6 +35,8 @@ NebulaGraph NetworkX (ng_nx) is a tool that allows you to use the NetworkX API f
 
 ## Quick Start
 
+Prepare for a NebulaGraph cluster within Colab in 5 mins following https://github.com/nebula-contrib/nebulagraph-lite.
+
 ### Install
 
 ```bash
@@ -49,10 +51,13 @@ from ng_nx.utils import NebulaGraphConfig
 
 import networkx as nx
 
-config = NebulaGraphConfig()
+config = NebulaGraphConfig(
+    space="basketballplayer",
+    graphd_hosts="127.0.0.1:9669",
+    metad_hosts="127.0.0.1:9559"
+)
 
 reader = NebulaReader(
-    space="basketballplayer",
     edges=["follow", "serve"],
     properties=[["degree"], ["start_year", "end_year"]],
     nebula_config=config, limit=10000)
