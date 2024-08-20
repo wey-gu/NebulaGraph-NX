@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2023 The NebulaGraph Authors. All rights reserved.
 
-from typing import Generator, List
+from typing import Generator, List, Dict, Literal
 
 from nebula3.Config import Config
 from nebula3.gclient.net import ConnectionPool
@@ -10,7 +10,7 @@ from ng_nx.utils import NebulaGraphConfig, result_to_df
 
 
 class NebulaWriter:
-    def __init__(self, data: dict, nebula_config: NebulaGraphConfig):
+    def __init__(self, data: Dict, nebula_config: NebulaGraphConfig):
         self.data = data
         self.label = None
         self.properties = []
@@ -37,7 +37,9 @@ class NebulaWriter:
         properties: List[str],
         batch_size: int = 256,
         write_mode: str = "insert",
-        sink: str = "nebulagraph_vertex",
+        sink: Literal[
+            "nebulagraph_vertex", "nebulagraph_edge"
+        ] = "nebulagraph_vertex",
     ):
         self.label = label
         self.properties = properties
@@ -48,6 +50,16 @@ class NebulaWriter:
     def write(self):
         if self.write_mode == "update":
             raise NotImplementedError("Update mode is not implemented yet")
+        if self.write_mode != "insert":
+            raise ValueError("Only insert mode is supported now")
+        if self.sink == "nebulagraph_vertex":
+            return self._write_vertex()
+        elif self.sink == "nebulagraph_edge":
+            return self._write_edge()
+        else:
+            raise ValueError("Invalid sink type")
+
+    def _write_vertex(self):
         if self.sink == "nebulagraph_edge":
             raise NotImplementedError("Edge sink is not implemented yet")
         if self.write_mode != "insert" or self.sink != "nebulagraph_vertex":
@@ -134,4 +146,75 @@ class NebulaWriter:
                 ), f"Failed to write data: {result.error_msg()}"
             else:
                 raise TypeError("Data should be a dict or a generator object")
+        return True
+
+    def _write_edge(self):
+        with self.connection_pool.session_context(
+            self.nebula_user, self.nebula_password
+        ) as session:
+            assert session.execute(
+                f"USE {self.space}"
+            ).is_succeeded(), f"Failed to use space {self.space}"
+
+            # Get types of edge properties
+            properties_types = {}
+            query = f"DESC EDGE {self.label}"
+            result = session.execute(query)
+            assert result.is_succeeded(), (
+                f"Failed to get types of properties: {result.error_msg()}, "
+                f"consider creating EDGE {self.label} first."
+            )
+            types_df = result_to_df(result)
+
+            for i in range(len(types_df)):
+                properties_types[types_df.iloc[i, 0]] = types_df.iloc[i, 1]
+            for property in self.properties:
+                if property not in properties_types:
+                    raise ValueError(
+                        f"Property {property} is not defined in EDGE {self.label}"
+                    )
+
+            # Set up the write query in batches
+            query_prefix = (
+                f"INSERT EDGE {self.label} ({','.join(self.properties)}) VALUES "
+            )
+            query = query_prefix
+            quote = '"'
+
+            def process_edge(src, dst, rank, props):
+                nonlocal query
+                prop_values = ",".join(
+                    [
+                        f"{quote}{str(value)}{quote}"
+                        if properties_types[self.properties[i]] == "string"
+                        else str(value)
+                        for i, value in enumerate(props)
+                    ]
+                )
+                query += f"{quote}{src}{quote}->{quote}{dst}{quote}@{rank}:({prop_values}),"
+
+            batch_count = 0
+            for edge in self.data:
+                if batch_count == self.batch_size:
+                    # Execute the query
+                    query = query[:-1]  # Remove trailing comma
+                    result = session.execute(query)
+                    assert (
+                        result.is_succeeded()
+                    ), f"Failed to write data: {result.error_msg()}"
+                    query = query_prefix
+                    batch_count = 0
+
+                src, dst, rank, props = edge
+                process_edge(src, dst, rank, props)
+                batch_count += 1
+
+            # Execute the last batch
+            if batch_count > 0:
+                query = query[:-1]  # Remove trailing comma
+                result = session.execute(query)
+                assert (
+                    result.is_succeeded()
+                ), f"Failed to write data: {result.error_msg()}"
+
         return True

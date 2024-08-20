@@ -24,27 +24,50 @@
 
 ---
 
+## Table of Contents
+
+- [Introduction](#introduction)
+- [Features](#features)
+- [Installation](#installation)
+- [Usage](#usage)
+  - [Reading Data from NebulaGraph](#reading-data-from-nebulagraph)
+  - [Running Algorithms](#running-algorithms)
+  - [Writing Results Back to NebulaGraph](#writing-results-back-to-nebulagraph)
+- [Advanced Usage](#advanced-usage)
+  - [NebulaQueryReader](#nebulaqueryreader)
+- [Readers](#readers)
+- [Documentation](#documentation)
+- [Contributing](#contributing)
+
+## Introduction
+
 NebulaGraph NetworkX (ng_nx) is a powerful tool that bridges NebulaGraph and NetworkX, enabling you to leverage NetworkX's rich set of graph algorithms and analysis tools on data stored in NebulaGraph. This integration combines NebulaGraph's advanced storage capabilities with NetworkX's extensive graph analysis functionality.
 
-## Quick Start
+## Features
 
-### Prerequisites
+- Seamless integration between NebulaGraph and NetworkX
+- Multiple reader types for flexible data retrieval
+- Easy-to-use writers for storing analysis results back to NebulaGraph
+- Support for both vertex and edge data operations
+- Compatibility with NetworkX's extensive library of graph algorithms
+
+## Installation
 
 Ensure you have a NebulaGraph cluster running. For a quick setup, you can use [NebulaGraph Lite](https://github.com/nebula-contrib/nebulagraph-lite) to set up a cluster in Colab within 5 minutes.
 
-### Installation
+Install ng_nx using pip:
 
 ```bash
 pip install ng_nx
 ```
 
-### Run Algorithm on NebulaGraph
+## Usage
+
+### Reading Data from NebulaGraph
 
 ```python
 from ng_nx import NebulaReader
 from ng_nx.utils import NebulaGraphConfig
-
-import networkx as nx
 
 config = NebulaGraphConfig(
     space="basketballplayer",
@@ -58,24 +81,38 @@ reader = NebulaReader(
     nebula_config=config, limit=10000)
 
 g = reader.read()
+```
 
+### Running Algorithms
+
+```python
+import networkx as nx
+import community as community_louvain
+
+# Run PageRank algorithm
 pr = nx.pagerank(
     g, alpha=0.85,
     max_iter=100,
     tol=1e-06,
     weight='degree')
 
-import community as community_louvain
-
+# Run Louvain community detection
 ug = g.to_undirected()
 louvain = community_louvain.best_partition(ug)
 ```
 
-### Write Result to NebulaGraph
+### Writing Results Back to NebulaGraph
 
-#### Create Schema for the result writing
+Typical use cases are:
 
-```ngql
+1. Write the result of graph algorithm to NebulaGraph as vertex data.
+2. Write the result of graph algorithm to NebulaGraph as edge data.
+
+#### Write Vertex Data to NebulaGraph after Graph Analysis
+
+We could create schema for pagerank and louvain like this:
+
+```sql
 CREATE TAG IF NOT EXISTS pagerank (
     pagerank double NOT NULL
 );
@@ -84,6 +121,8 @@ CREATE TAG IF NOT EXISTS louvain (
     cluster_id int NOT NULL
 );
 ```
+
+Then we can run pagerank and louvain algorithm and write the result to NebulaGraph like this:
 
 ```python
 from ng_nx import NebulaWriter
@@ -115,7 +154,53 @@ louvain_writer.set_options(
     write_mode="insert",
     sink="nebulagraph_vertex",
 )
-louvain_writer.write()
+louvain_writer.write() # write back to NebulaGraph
+
+```
+
+#### Write Edge Data to NebulaGraph after Graph Analysis
+
+Say we have a graph with player and follow edge, we can write the result to NebulaGraph like this:
+
+```sql
+CREATE TAG IF NOT EXISTS player (
+    name string NOT NULL,
+    age int NOT NULL
+);
+
+CREATE EDGE IF NOT EXISTS follow (
+    start_year int NOT NULL,
+    end_year int NOT NULL
+);
+```
+
+We can write the result to NebulaGraph like this:
+
+```python
+from ng_nx import NebulaWriter
+
+# Example edge data
+edge_data = [
+    ("player1", "player2", 0, [2022, 2023]),  # src, dst, rank, [start_year, end_year]
+    ("player2", "player3", 1, [2021, 2022]),
+    # ... more edges ...
+]
+
+edge_writer = NebulaWriter(data=edge_data, nebula_config=config)
+
+# properties to write, map the properties to the edge data
+properties = ["start_year", "end_year"]
+
+edge_writer.set_options(
+    label="follow",  # Edge type name
+    properties=properties,
+    batch_size=256,
+    write_mode="insert",
+    sink="nebulagraph_edge",
+)
+
+# Write edges to NebulaGraph
+edge_writer.write()
 ```
 
 ### Using NebulaQueryReader
@@ -141,6 +226,29 @@ g = reader.read(query)
 
 This approach allows you to leverage the full power of NebulaGraph's query language while still being able to analyze the results using NetworkX.
 
+## Advanced Usage
+
+### NebulaQueryReader
+
+The `NebulaQueryReader` allows you to execute any NebulaGraph query and construct a NetworkX graph from the result.
+
+```python
+from ng_nx import NebulaQueryReader
+from ng_nx.utils import NebulaGraphConfig
+
+config = NebulaGraphConfig(
+    space="demo_basketballplayer",
+    graphd_hosts="127.0.0.1:9669",
+    metad_hosts="127.0.0.1:9559"
+)
+
+reader = NebulaQueryReader(nebula_config=config)
+
+# Execute a custom query
+query = "MATCH p=(v:player{name:'Tim Duncan'})-[e:follow*1..3]->(v2) RETURN p"
+g = reader.read(query)
+```
+
 ## Readers
 
 NG-NX provides three types of readers to fetch data from NebulaGraph:
@@ -156,3 +264,7 @@ Each reader is designed to cater to different use cases, providing flexibility i
 ## Documentation
 
 [API Reference](https://github.com/wey-gu/nebulagraph-nx/blob/main/docs/API.md)
+
+## Contributing
+
+Contributions are welcome! If you find any issues or have suggestions for improvements, please open an issue or submit a pull request on the [GitHub repository](https://github.com/wey-gu/nebulagraph-nx).
