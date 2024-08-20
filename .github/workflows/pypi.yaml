@@ -1,0 +1,23 @@
+name: Upload package to pypi
+
+on:
+  release:
+    types:
+      - published
+
+jobs:
+  ci:
+    runs-on: ubuntu-22.04
+
+    steps:
+    - uses: actions/checkout@v4
+    - uses: pdm-project/setup-pdm@v4
+      with:
+        python-version: '3.x'
+        cache: true
+
+    - name: Build and publish
+      env:
+        PDM_PUBLISH_USERNAME: __token__
+        PDM_PUBLISH_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+      run: pdm publish
