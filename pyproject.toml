@@ -79,7 +79,7 @@ filter_files = true
 
 [project]
 name = "ng_nx"
-version = "0.2.2"
+version = "0.2.3"
 description = "NebulaGraph NetowrkX Adaptor"
 authors = [
     {name = "Wey Gu", email = "weyl.gu@gmail.com"},

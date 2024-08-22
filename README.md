@@ -65,6 +65,8 @@ pip install ng_nx
 
 ### Reading Data from NebulaGraph
 
+> With GraphD Client
+
 ```python
 from ng_nx import NebulaReader
 from ng_nx.utils import NebulaGraphConfig
@@ -79,6 +81,28 @@ reader = NebulaReader(
     edges=["follow", "serve"],
     properties=[["degree"], ["start_year", "end_year"]],
     nebula_config=config, limit=10000)
+
+g = reader.read()
+```
+
+> With Storage Client, this requires ng_nx being run within NebulaGraph Network or expose the metad and storaged to it, with same host and port being registered in NebulaGraph(`SHOW HOSTS META;` and `SHOW HOSTS;`).
+
+```python
+from ng_nx import NebulaScanReader
+from ng_nx.utils import NebulaGraphConfig
+
+# Here, we need to be able to resolve the metad and storaged hosts, where they are the same with `SHOW HOSTS META;` and `SHOW HOSTS;`
+
+config = NebulaGraphConfig(
+    space="demo_basketballplayer",
+    graphd_hosts="graphd0:9669",
+    metad_hosts="metad0:9559"
+)
+
+reader = NebulaScanReader(
+    edges=["follow", "serve"],
+    properties=[["degree"], ["start_year", "end_year"]],
+    nebula_config=config, limit=10000, with_rank=True)
 
 g = reader.read()
 ```
@@ -253,11 +277,11 @@ g = reader.read(query)
 
 NG-NX provides three types of readers to fetch data from NebulaGraph:
 
-1. `NebulaReader`: Reads a graph from NebulaGraph based on specified edges and properties, returning a NetworkX graph. It uses the MATCH clause internally to fetch data from NebulaGraph.
+1. `NebulaReader`(**Load from Edge and Properties via MATCH**): Reads a graph from NebulaGraph based on specified edges and properties, returning a NetworkX graph. It uses the MATCH clause internally to fetch data from NebulaGraph.
 
-2. `NebulaQueryReader`: Executes a custom NebulaGraph query and constructs a NetworkX graph from the result. This reader is particularly useful when you need to perform complex queries or have specific data retrieval requirements.
+2. `NebulaQueryReader`(**Construct from Any Query**): Executes a custom NebulaGraph query and constructs a NetworkX graph from the result. This reader is particularly useful when you need to perform complex queries or have specific data retrieval requirements.
 
-3. `NebulaScanReader` (Coming soon): Will read graph data from NebulaGraph using a configuration similar to `NebulaReader`, but it will bypass the MATCH clause and utilize the SCAN interface with the Storage Client for potentially improved performance on large datasets.
+3. `NebulaScanReader`(**Better for LARGE datasets**): Will read graph data from NebulaGraph using a configuration similar to `NebulaReader`, but it will bypass the MATCH clause and utilize the SCAN interface with the Storage Client for potentially improved performance on large datasets. Note that this reader requires the NebulaGraph cluster to configure the metad and storaged accessible from the ng_nx.
 
 Each reader is designed to cater to different use cases, providing flexibility in how you interact with and retrieve data from NebulaGraph for analysis with NetworkX.
 

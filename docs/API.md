@@ -17,6 +17,7 @@ config = NebulaGraphConfig(**config_dict)
 reader = NebulaReader(
     edges=["follow", "serve"],
     properties=[["degree"], ["start_year", "end_year"]],
+    with_rank=True, # this enable the multi-graph, and the edge_key is "__rank__" from NebulaGraph rank(edge)
     nebula_config=config, limit=100)
 
 g = reader.read()
@@ -27,6 +28,55 @@ pr = nx.pagerank(
     max_iter=100,
     tol=1e-06,
     weight='degree')
+```
+
+
+## NebulaQueryReader
+
+The `NebulaQueryReader` allows you to execute any NebulaGraph query and construct a NetworkX graph from the result.
+
+```python
+from ng_nx import NebulaQueryReader
+from ng_nx.utils import NebulaGraphConfig
+
+config = NebulaGraphConfig(
+    space="demo_basketballplayer",
+    graphd_hosts="127.0.0.1:9669",
+    metad_hosts="127.0.0.1:9559"
+)
+
+reader = NebulaQueryReader(
+    query="MATCH p=(v:player{name:'Tim Duncan'})-[e:follow*1..3]->(v2) RETURN p",
+    nebula_config=config,
+    limit=10000,
+    with_rank=True,
+)
+
+g = reader.read()
+```
+
+## NebulaScanReader
+
+The `NebulaScanReader` allows you to scan all vertexes and edges in NebulaGraph, and construct a NetworkX graph from the result.
+
+```python
+from ng_nx import NebulaScanReader
+from ng_nx.utils import NebulaGraphConfig
+
+# Here, we need to be able to resolve the metad and storaged hosts, where they are the same with `SHOW HOSTS META;` and `SHOW HOSTS;`
+
+config = NebulaGraphConfig(
+    space="demo_basketballplayer",
+    graphd_hosts="graphd0:9669",
+    metad_hosts="metad0:9559"
+)
+
+reader = NebulaScanReader(
+    edges=["follow", "serve"],
+    properties=[["degree"], ["start_year", "end_year"]],
+    nebula_config=config, limit=10000, with_rank=True)
+
+g = reader.read()
 ```
 
 ## NebulaWriter
