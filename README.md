@@ -1,4 +1,4 @@
-<img alt="NebulaGraph NetworkX Adaptor(ng_nx)" src="https://user-images.githubusercontent.com/1651790/227207918-7c023215-b7cf-4aa5-b734-bc50411dab77.png">
+<img alt="NebulaGraph NetworkX Adaptor(ng_nx)" src="https://github.com/user-attachments/assets/9a66411b-db9d-4243-a47f-1719221b335d">
 
 <p align="center">
     <em>Manipulate and analyze NebulaGraph data using the NetworkX API</em>
