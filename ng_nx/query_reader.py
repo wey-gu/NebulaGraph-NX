@@ -17,6 +17,7 @@ class NebulaReader:
         properties: list,
         nebula_config: NebulaGraphConfig,
         limit: int,
+        with_rank: bool = False,  # this enable the multi-graph, and the edge_key is "__rank__"
     ):
         self.edges = edges
         self.properties = properties
@@ -37,6 +38,7 @@ class NebulaReader:
         assert len(edges) > 0 and len(edges) == len(
             properties
         ), "edges and properties should have the same length"
+        self.with_rank = with_rank
 
     def read(self):
         with self.connection_pool.session_context(
@@ -53,6 +55,8 @@ class NebulaReader:
                 properties_query_field = ""
                 for property in properties:
                     properties_query_field += f", e.{property} AS {property}"
+                if self.with_rank:
+                    properties_query_field += ", rank(e) AS `__rank__`"
                 result = session.execute(
                     f"MATCH ()-[e:`{edge}`]->() RETURN src(e) AS src, dst(e) AS dst{properties_query_field} LIMIT {self.limit}"
                 )
@@ -66,9 +70,24 @@ class NebulaReader:
                 _df = result_to_df(result)
                 # TBD, consider add label of edge
                 properties = self.properties[i] if self.properties[i] else None
-                _g = nx.from_pandas_edgelist(
-                    _df, "src", "dst", properties, create_using=nx.MultiDiGraph()
-                )
+                if self.with_rank:
+                    properties = properties + ["__rank__"]
+                    _g = nx.from_pandas_edgelist(
+                        _df,
+                        "src",
+                        "dst",
+                        properties,
+                        create_using=nx.MultiDiGraph(),
+                        edge_key="__rank__",
+                    )
+                else:
+                    _g = nx.from_pandas_edgelist(
+                        _df,
+                        "src",
+                        "dst",
+                        properties,
+                        create_using=nx.MultiDiGraph(),
+                    )
                 g = nx.compose(g, _g)
             return g
 
@@ -77,6 +96,7 @@ class NebulaReader:
 
     def __del__(self):
         self.release()
+
 
 class NebulaQueryReader:
     def __init__(self, nebula_config: NebulaGraphConfig):
@@ -98,29 +118,33 @@ class NebulaQueryReader:
             assert session.execute(
                 f"USE {self.config.space}"
             ).is_succeeded(), f"Failed to use space {self.config.space}"
-            
+
             result: ResultSet = session.execute(query)
-            assert result.is_succeeded(), f"Query execution failed: {result.error_msg()}"
-            
+            assert (
+                result.is_succeeded()
+            ), f"Query execution failed: {result.error_msg()}"
+
             vis_data = result.dict_for_vis()
             return self._construct_graph(vis_data)
 
     def _construct_graph(self, vis_data: dict) -> nx.MultiDiGraph:
         g = nx.MultiDiGraph()
-        
+
         # Add nodes
-        for node_data in vis_data['nodes']:
-            g.add_node(node_data['id'], **node_data['props'], labels=node_data['labels'])
-        
-        # Add edges
-        for edge_data in vis_data['edges']:
-            g.add_edge(
-                edge_data['src'],
-                edge_data['dst'],
-                key=edge_data['name'],
-                **edge_data['props']
+        for node_data in vis_data["nodes"]:
+            g.add_node(
+                node_data["id"], **node_data["props"], labels=node_data["labels"]
             )
-        
+
+        # Add edges
+        for edge_data in vis_data["edges"]:
+            g.add_edge(
+                edge_data["src"],
+                edge_data["dst"],
+                key=edge_data["name"],
+                **edge_data["props"],
+            )
+
         return g
 
     def release(self):
