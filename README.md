@@ -109,6 +109,14 @@ g = reader.read()
 
 ### Running Algorithms
 
+We need to install louvain and graspologic first, to run louvain and leiden algorithm that are not included in NetworkX(not like Pagerank etc).
+
+```bash
+pip3 install python-louvain graspologic
+```
+
+Then we can run the algorithms.
+
 ```python
 import networkx as nx
 import community as community_louvain
@@ -123,6 +131,14 @@ pr = nx.pagerank(
 # Run Louvain community detection
 ug = g.to_undirected()
 louvain = community_louvain.best_partition(ug)
+
+# Run Leiden community detection
+
+from graspologic.partition import hierarchical_leiden
+
+# Cast Multi-Graph to Homogeneous Graph
+g = nx.Graph(g)
+community_hierarchical_clusters = hierarchical_leiden(ug, max_cluster_size=10)
 ```
 
 ### Writing Results Back to NebulaGraph
